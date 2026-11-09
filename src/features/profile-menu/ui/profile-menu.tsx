@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef } from 'react';
+import {formatName} from '@/entities/user';
 import type {UserProfile} from '@/entities/user';
 import { Logo } from '@/shared/ui/logo';
 export function ProfileMenu({ user, onSignOut }: { user?: UserProfile; onSignOut: () => void }) {
@@ -17,7 +18,7 @@ export function ProfileMenu({ user, onSignOut }: { user?: UserProfile; onSignOut
       ref.current.querySelector('summary')?.focus();
     }
   }}>
-    <summary className="user"><Logo />{user?.fullName??"Профиль"}</summary>
+    <summary className="user"><Logo />{user?formatName(user.fullName):"Профиль"}</summary>
     <div className="profile-menu">{user&&<div className="profile-info"><strong>{user.fullName}</strong><span>{user.position}</span><span>{user.email}</span></div>}<button onClick={onSignOut}>Выйти</button></div>
   </details>;
 }
