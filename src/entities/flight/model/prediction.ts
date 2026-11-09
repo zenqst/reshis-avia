@@ -8,12 +8,8 @@ export function predict(r: Route, f: Forecast, price: number) {
  const optimalPrice = candidates.reduce((a,p) => profit(p)>profit(a)?p:a);
  const quantiles = f.base.map(x => Math.max(0,x-b*(price-r.base_price)));
  const desired = quantiles[4], bought = Math.min(f.seats,desired), revenue=price*bought, costs=c*bought;
- const sigma = Math.max((quantiles[8]-quantiles[0])/2.56, 0.5);
- const left = desired-3.5*sigma, right = desired+3.5*sigma;
- const count = Math.max(2, Math.ceil((right-left)/2));
- const xs = Array.from({length:count+1},(_,i)=>left+(right-left)*i/count);
- xs.push(desired); xs.sort((a,b)=>a-b);
- const points = xs.map(x=>({x,y:Math.exp(-.5*((x-desired)/sigma)**2)/(sigma*Math.sqrt(2*Math.PI))}));
+ // Plot the nine forecast quantiles without assuming a distribution.
+ const points = quantiles.map((x, i) => ({x, y: (i + 1) * 10}));
  return {price,optimalPrice,desired,bought,seats:f.seats,loadFactor:bought/f.seats*100,free:f.seats-bought,revenue,costs,profit:revenue-costs,profitDelta:revenue-costs-profit(r.base_price),baseDemand:d,uncertainty:quantiles[8]-quantiles[0],quantiles,points};
 }
 export type Prediction = ReturnType<typeof predict>;

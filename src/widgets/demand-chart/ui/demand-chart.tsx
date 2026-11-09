@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useEffect, useRef } from 'react';
 import Chart from 'chart.js/auto';
 import type { Prediction } from '@/entities/flight/model/prediction';
@@ -11,17 +11,17 @@ export function DemandDistribution({data}:{data:Prediction}) {
   if(!canvas.current)return;
   const chart=new Chart(canvas.current,{
    type:'line',
-   data:{datasets:[{data:[],borderColor:BLUE,pointRadius:0,borderWidth:3,tension:.2,fill:false},{data:[],borderColor:RED,pointRadius:0,borderWidth:3,tension:.2,fill:false}]},
-   options:{responsive:true,maintainAspectRatio:false,parsing:false,animation:{duration:180},layout:{padding:{top:45,right:12}},plugins:{legend:{display:false}},scales:{x:{type:'linear',grid:{color:'#252525'},ticks:{color:'#8a8a8a',maxTicksLimit:10,precision:0,maxRotation:0,callback:value=>Math.round(Number(value)).toLocaleString('ru-RU')},title:{display:true,text:'Спрос, пасс.',color:'#8a8a8a'}},y:{min:0,max:100,ticks:{display:true,stepSize:20,color:'#8a8a8a',callback:value=>`${value}%`},grid:{color:'#252525'},title:{display:true,text:'Относительная плотность (пик = 100%)',color:'#8a8a8a'}}}},
+   data:{datasets:[{data:[],borderColor:BLUE,pointRadius:4,borderWidth:3,tension:0,fill:false},{data:[],borderColor:RED,pointRadius:4,borderWidth:3,tension:0,fill:false}]},
+   options:{responsive:true,maintainAspectRatio:false,parsing:false,animation:{duration:180},layout:{padding:{top:45,right:12}},plugins:{legend:{display:false}},scales:{x:{type:'linear',grid:{color:'#252525'},ticks:{color:'#8a8a8a',maxTicksLimit:10,precision:0,maxRotation:0,callback:value=>Math.round(Number(value)).toLocaleString('ru-RU')},title:{display:true,text:'Спрос, пасс.',color:'#8a8a8a'}},y:{min:0,max:100,ticks:{display:true,stepSize:20,color:'#8a8a8a',callback:value=>`${value}%`},grid:{color:'#252525'},title:{display:true,text:'Квантиль спроса, %',color:'#8a8a8a'}}}},
    plugins:[{
     id:'distribution-markers',
     beforeDatasetsDraw(c){
-     const d=latest.current,{ctx,chartArea:a}=c,peak=Math.max(...d.points.map(p=>p.y));
+     const d=latest.current,{ctx,chartArea:a}=c;
      const split=Math.max(a.left,Math.min(a.right,c.scales.x.getPixelForValue(d.seats)));
      for(let i=0;i<2;i++){
       ctx.save();ctx.beginPath();ctx.rect(i===0?a.left:split,a.top,i===0?split-a.left:a.right-split,a.bottom-a.top);ctx.clip();
       const gradient=ctx.createLinearGradient(0,a.top,0,a.bottom);gradient.addColorStop(0,i===0?'#474fea55':'#EF444455');gradient.addColorStop(1,i===0?'#474fea00':'#EF444400');ctx.fillStyle=gradient;
-      ctx.beginPath();const points=d.points.filter(p=>p.x>=0);if(points.length){ctx.moveTo(c.scales.x.getPixelForValue(points[0].x),a.bottom);for(const p of points)ctx.lineTo(c.scales.x.getPixelForValue(p.x),c.scales.y.getPixelForValue(p.y/peak*100));ctx.lineTo(c.scales.x.getPixelForValue(points[points.length-1].x),a.bottom);ctx.closePath();ctx.fill();}ctx.restore();
+      ctx.beginPath();const points=d.points.filter(p=>p.x>=0);if(points.length){ctx.moveTo(c.scales.x.getPixelForValue(points[0].x),a.bottom);for(const p of points)ctx.lineTo(c.scales.x.getPixelForValue(p.x),c.scales.y.getPixelForValue(p.y));ctx.lineTo(c.scales.x.getPixelForValue(points[points.length-1].x),a.bottom);ctx.closePath();ctx.fill();}ctx.restore();
      }
     },
     beforeDatasetDraw(c,args){
@@ -35,7 +35,7 @@ export function DemandDistribution({data}:{data:Prediction}) {
      const d=latest.current,{ctx,chartArea:a}=c;
      const badge=(text:string,x:number,y:number,color:string)=>{ctx.font='14px Medeo, sans-serif';const w=ctx.measureText(text).width+24;const left=Math.max(a.left,Math.min(a.right-w,x-w/2));ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(left,y,w,32,8);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(text,left+12,y+21);};
      ctx.save();
-     const mx=c.scales.x.getPixelForValue(d.desired),peak=Math.max(...d.points.map(p=>p.y)),py=c.scales.y.getPixelForValue(100);
+     const mx=c.scales.x.getPixelForValue(d.desired),py=c.scales.y.getPixelForValue(50);
      ctx.strokeStyle=BLUE;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mx,py);ctx.lineTo(mx,a.bottom);ctx.stroke();
      badge(`Медиана: ${Math.round(d.desired)} пасс.`,mx,Math.min(a.bottom-36,py+(a.bottom-py)*.45),BLUE);
      const sx=c.scales.x.getPixelForValue(d.seats);ctx.strokeStyle=RED;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(sx,a.top);ctx.lineTo(sx,a.bottom);ctx.stroke();ctx.setLineDash([]);
@@ -47,16 +47,16 @@ export function DemandDistribution({data}:{data:Prediction}) {
  },[]);
  useEffect(()=>{
   const c=instance.current;if(!c)return;
-  c.data.datasets.forEach((set,i)=>{set.data=data.points.filter(p=>p.x>=0).map(p=>({x:p.x,y:p.y/Math.max(...data.points.map(p=>p.y))*100}));set.backgroundColor=context=>{
+  c.data.datasets.forEach((set,i)=>{set.data=data.points.filter(p=>p.x>=0).map(p=>({x:p.x,y:p.y}));set.backgroundColor=context=>{
    const {ctx,chartArea:a}=context.chart;if(!a)return 'transparent';
    const gradient=ctx.createLinearGradient(0,a.top,0,a.bottom);gradient.addColorStop(0,i===0?'#474fea55':'#EF444455');gradient.addColorStop(1,i===0?'#474fea00':'#EF444400');return gradient;
   };});
-  const left=data.points[0].x,right=data.points[data.points.length-1].x;
-  // Preserve the passenger coordinate system while price moves the curve.
+  const right=data.points[data.points.length-1].x;
+  // Include the forecast range and the seat limit.
   const options=c.options.scales!.x!;
   options.min=0;
-  options.max=Math.ceil(Math.max(Number(options.max??right),right,data.seats*1.12)/10)*10;
+  options.max=Math.ceil(Math.max(right*1.08,data.seats*1.12)/10)*10;
   c.update();
  },[data]);
- return <section className="live-chart" aria-label="Распределение спроса"><canvas ref={canvas} role="img" aria-label={`Медиана ${Math.round(data.desired)} пассажиров, вместимость ${data.seats} мест`}/></section>;
+ return <section title="Точки: квантили 10–90%; между соседними уровнями — 10% вероятности. Линии — интерполяция; хвосты не показаны." className="live-chart" aria-label="Распределение спроса"><canvas ref={canvas} role="img" aria-label={`Медиана ${Math.round(data.desired)} пассажиров, вместимость ${data.seats} мест`}/></section>;
 }
