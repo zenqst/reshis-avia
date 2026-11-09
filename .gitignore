@@ -1,0 +1,13 @@
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+preview*.png
+.vercel/
+.env*.local
+/fonts/
+/logo.svg
+.env
+.env.*
+!.env.example
