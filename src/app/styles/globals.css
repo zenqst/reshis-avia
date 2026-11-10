@@ -38,3 +38,4 @@
 
 @media(min-width:1000px){main{display:flex;flex-direction:column;min-height:0}.distribution-panel{flex:1;min-height:300px}.distribution-panel .live-chart{flex:1;height:auto;min-height:220px}.distribution-panel .chart-explanation{flex:none;margin-bottom:0}.distribution-toolbar{flex:none}}
 @media(max-width:999px){.distribution-panel{min-height:0}.distribution-panel .live-chart{height:clamp(340px,50vh,560px)}}
+@media(max-width:720px){.distribution-panel .live-chart{height:310px}}

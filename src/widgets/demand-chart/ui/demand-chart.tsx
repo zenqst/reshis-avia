@@ -51,7 +51,7 @@ function DemandChart({data,mode}:{data:Prediction;mode:'bell'|'quantiles'}) {
    }]
   });instance.current=chart;
   chart.options.scales!.y!.ticks!.callback=value=>mode==='bell'?String(value)+'%':(Number(value)/100).toFixed(1).replace('.',',');
-  chart.options.scales!.y!.title!.text=mode==='bell'?'Относительная плотность (пик = 100%)':'Квантиль спроса, q';
+  chart.options.scales!.y!.title!.text=mode==='bell'?(window.innerWidth<=720?'Относительная плотность, %':'Относительная плотность (пик = 100%)'):'Квантиль спроса, q';
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)chart.options.animation=false;
   return()=>{chart.destroy();instance.current=null;};
  },[]);
