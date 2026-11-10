@@ -13,6 +13,6 @@ export async function POST(request:Request){
  if(input.price<route.price_min||input.price>route.price_max)return Response.json({error:'Цена вне диапазона'},{status:422});
  const forecast=data.getForecast(input.route,input.date);if(!forecast)return Response.json({error:'Прогноз на эту дату отсутствует'},{status:404});
  return Response.json({...predict(route,forecast,input.price,q),forecast});
- }catch{return Response.json({error:'Ошибка чтения данных'},{status:500});}
+ }catch{return Response.json({error:'Данные прогноза недоступны или повреждены. Проверьте CSV и повторите загрузку.'},{status:500});}
  }catch(error){return errorResponse(error);}
 }

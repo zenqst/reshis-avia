@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "test:security": "node tests/security.cjs",
     "test:prediction": "node tests/prediction.cjs",
-    "test": "npm run test:prediction && npm run test:security"
+    "test": "npm run test:prediction && npm run test:security && npm run test:data",
+    "test:data": "node tests/data.cjs"
   },
   "dependencies": {
     "next": "^16.0.0",

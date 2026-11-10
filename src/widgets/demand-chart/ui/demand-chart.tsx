@@ -26,7 +26,7 @@ function DemandChart({data,mode}:{data:Prediction;mode:'bell'|'quantiles'}) {
      for(let i=0;i<2;i++){
       ctx.save();ctx.beginPath();ctx.rect(i===0?a.left:split,a.top,i===0?split-a.left:a.right-split,a.bottom-a.top);ctx.clip();
       const gradient=ctx.createLinearGradient(0,a.top,0,a.bottom);gradient.addColorStop(0,i===0?'#474fea55':'#EF444455');gradient.addColorStop(1,i===0?'#474fea00':'#EF444400');ctx.fillStyle=gradient;
-      ctx.beginPath();const points=d.points.filter(p=>p.x>=0);if(points.length){ctx.moveTo(c.scales.x.getPixelForValue(points[0].x),a.bottom);for(const p of points)ctx.lineTo(c.scales.x.getPixelForValue(p.x),c.scales.y.getPixelForValue(p.y));ctx.lineTo(c.scales.x.getPixelForValue(points[points.length-1].x),a.bottom);ctx.closePath();ctx.fill();}ctx.restore();
+      ctx.beginPath();const points=c.getDatasetMeta(0).data.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));if(points.length){ctx.moveTo(points[0].x,a.bottom);for(const p of points)ctx.lineTo(p.x,p.y);ctx.lineTo(points[points.length-1].x,a.bottom);ctx.closePath();ctx.fill();}ctx.restore();
      }
     },
     beforeDatasetDraw(c,args){
@@ -38,9 +38,11 @@ function DemandChart({data,mode}:{data:Prediction;mode:'bell'|'quantiles'}) {
     afterDatasetDraw(c){c.ctx.restore();},
     afterDraw(c){
      const d=latest.current,{ctx,chartArea:a}=c;
-     const badge=(text:string,x:number,y:number,color:string)=>{ctx.font='14px Medeo, sans-serif';const w=ctx.measureText(text).width+24;const left=Math.max(a.left,Math.min(a.right-w,x-w/2));ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(left,y,w,32,8);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(text,left+12,y+21);};
+     const badge=(text:string,x:number,y:number,color:string)=>{ctx.font=`${a.width<360?11:14}px Medeo, sans-serif`;const w=Math.min(a.width,ctx.measureText(text).width+24);const left=Math.max(a.left,Math.min(a.right-w,x-w/2));ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(left,y,w,32,8);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(text,left+12,y+21,w-24);};
      ctx.save();
-     const mx=c.scales.x.getPixelForValue(d.desired),py=c.scales.y.getPixelForValue(mode==='bell'?100:d.q*100);
+     const elements=c.getDatasetMeta(0).data;
+     const marker=mode==='bell'?elements.reduce<typeof elements[number]|undefined>((best,p)=>!best||p.y<best.y?p:best,undefined):elements[Math.round(d.q*10)-1];
+     const mx=marker?.x??c.scales.x.getPixelForValue(d.desired),py=marker?.y??c.scales.y.getPixelForValue(mode==='bell'?100:d.q*100);
      ctx.strokeStyle=BLUE;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mx,py);ctx.lineTo(mx,a.bottom);ctx.stroke();
      badge(`Выбранный спрос: ${Math.round(d.desired)} пасс.`,mx,Math.min(a.bottom-36,py+(a.bottom-py)*.45),BLUE);
      const sx=c.scales.x.getPixelForValue(d.seats);ctx.strokeStyle=RED;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(sx,a.top);ctx.lineTo(sx,a.bottom);ctx.stroke();ctx.setLineDash([]);
