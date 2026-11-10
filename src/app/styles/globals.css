@@ -35,3 +35,6 @@
 .chart-canvas-frame{position:absolute;inset:12px 14px;min-width:0;min-height:0}
 .chart-canvas-frame canvas{display:block;width:100%!important;height:100%!important}
 @media(max-width:720px){.chart-canvas-frame{inset:8px}.distribution-panel .live-chart{height:360px}.distribution-toolbar>span{font-size:13px}.chart-tabs{flex-wrap:wrap}}
+
+@media(min-width:1000px){main{display:flex;flex-direction:column;min-height:0}.distribution-panel{flex:1;min-height:300px}.distribution-panel .live-chart{flex:1;height:auto;min-height:220px}.distribution-panel .chart-explanation{flex:none;margin-bottom:0}.distribution-toolbar{flex:none}}
+@media(max-width:999px){.distribution-panel{min-height:0}.distribution-panel .live-chart{height:clamp(340px,50vh,560px)}}
