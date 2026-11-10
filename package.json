@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "typecheck": "tsc --noEmit",
-    "test:security": "node tests/security.cjs"
+    "test:security": "node tests/security.cjs",
+    "test:prediction": "node tests/prediction.cjs",
+    "test": "npm run test:prediction && npm run test:security"
   },
   "dependencies": {
     "next": "^16.0.0",

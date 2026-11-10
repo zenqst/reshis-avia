@@ -10,18 +10,19 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
  const router = useRouter();
  const [visible,setVisible] = useState(false);
  const [pending,setPending] = useState(false);
+ const [success,setSuccess] = useState(false);
  const [error,setError] = useState('');
  async function submit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();setError('');
+  if(pending)return;
   const fields = Object.fromEntries(new FormData(event.currentTarget));
   if(register && fields.password !== fields.confirmPassword){setError('Пароли не совпадают');return;}
   setPending(true);
   try {
    const response = await fetch(`/api/auth/${mode}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(fields)});
    if(!response.ok){const body=await response.json().catch(()=>null);throw Error(body?.error ?? 'Сервис авторизации пока недоступен');}
-   router.replace('/');router.refresh();
-  } catch(error){setError(error instanceof Error ? error.message : 'Не удалось подключиться к серверу');}
-  finally{setPending(false);}
+   setSuccess(true);router.replace('/');router.refresh();
+  } catch(error){setError(error instanceof Error ? error.message : 'Не удалось подключиться к серверу');setPending(false);}
  }
  return <div className="auth-screen"><Link href="/" className="auth-brand"><Logo/>Решись Авиа</Link>
  <section className="auth-card"><div className="auth-tabs"><Link href="/login" aria-current={!register?'page':undefined}>Вход</Link><Link href="/register" aria-current={register?'page':undefined}>Регистрация</Link></div>
@@ -33,6 +34,6 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
  <label>Пароль<div className="auth-password"><input name="password" type={visible?'text':'password'} autoComplete={register?'new-password':'current-password'} required minLength={register?15:1} maxLength={128} placeholder={register?'Не менее 15 символов':'Ваш пароль'}/><button type="button" onClick={()=>setVisible(!visible)} aria-label={visible?'Скрыть пароль':'Показать пароль'}>{visible?<EyeSlash size={20}/>:<Eye size={20}/>}</button></div></label>
  {register&&<label>Повторите пароль<input name="confirmPassword" type={visible?'text':'password'} autoComplete="new-password" required minLength={15} maxLength={128}/></label>}
  {error&&<p className="auth-error" role="alert">{error}</p>}
- <button className="auth-submit" disabled={pending}>{pending?'Подождите…':register?'Зарегистрироваться':'Войти'}</button>
+ <button className="auth-submit" disabled={pending} aria-busy={pending} aria-live="polite">{success?(register?'Профиль создан. Открываем…':'Вход выполнен. Открываем…'):pending?(register?'Создаём профиль…':'Проверяем данные…'):register?'Зарегистрироваться':'Войти'}</button>
  </form><p className="auth-footer">{register?'Уже есть аккаунт?':'Нет аккаунта?'} <Link href={register?'/login':'/register'}>{register?'Войти':'Зарегистрироваться'}</Link></p></section></div>;
 }

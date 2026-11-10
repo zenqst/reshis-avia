@@ -1,9 +1,14 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Chart from 'chart.js/auto';
 import type { Prediction } from '@/entities/flight/model/prediction';
 const BLUE='#474fea', RED='#EF4444';
 export function DemandDistribution({data}:{data:Prediction}) {
+ const [mode,setMode]=useState<'bell'|'quantiles'>('bell');
+ const chartData=mode==='bell'?data:{...data,points:data.quantiles.map((x,i)=>({x,y:(i+1)*10}))};
+ return <div className="distribution-panel"><div className="distribution-toolbar"><div className="chart-tabs" aria-label="Вид распределения"><button aria-pressed={mode==='bell'} onClick={()=>setMode('bell')}>Колокол</button><button aria-pressed={mode==='quantiles'} onClick={()=>setMode('quantiles')}>Квантили прогноза</button></div><span>Сценарий q = {data.q.toFixed(1).replace('.',',')}</span></div><DemandChart key={mode} data={chartData} mode={mode}/><p className="chart-explanation">{mode==='bell'?'Гауссовская аппроксимация вокруг выбранного спроса. Высота — относительная плотность, не вероятность. Красный хвост — спрос выше вместимости.':'Исходные квантили при введённой цене: между соседними уровнями — 10% вероятности. Линии — интерполяция; хвосты ниже q10 и выше q90 не показаны.'}</p><table className="sr-only"><caption>Квантили спроса при введённой цене</caption><thead><tr><th>Квантиль</th><th>Спрос, пассажиров</th></tr></thead><tbody>{data.quantiles.map((x,i)=><tr key={i}><th>{(i+1)/10}</th><td>{Math.round(x)}</td></tr>)}</tbody></table></div>;
+}
+function DemandChart({data,mode}:{data:Prediction;mode:'bell'|'quantiles'}) {
  const canvas=useRef<HTMLCanvasElement>(null);
  const instance=useRef<Chart<'line'>|null>(null);
  const latest=useRef(data);latest.current=data;
@@ -11,7 +16,7 @@ export function DemandDistribution({data}:{data:Prediction}) {
   if(!canvas.current)return;
   const chart=new Chart(canvas.current,{
    type:'line',
-   data:{datasets:[{data:[],borderColor:BLUE,pointRadius:0,borderWidth:3,tension:.2,fill:false},{data:[],borderColor:RED,pointRadius:0,borderWidth:3,tension:.2,fill:false}]},
+   data:{datasets:[{data:[],borderColor:BLUE,pointRadius:mode==='bell'?0:4,borderWidth:3,tension:0,fill:false},{data:[],borderColor:RED,pointRadius:mode==='bell'?0:4,borderWidth:3,tension:0,fill:false}]},
    options:{responsive:true,maintainAspectRatio:false,parsing:false,animation:{duration:180},layout:{padding:{top:45,right:12}},plugins:{legend:{display:false}},scales:{x:{type:'linear',grid:{color:'#252525'},ticks:{color:'#8a8a8a',maxTicksLimit:10,precision:0,maxRotation:0,callback:value=>Math.round(Number(value)).toLocaleString('ru-RU')},title:{display:true,text:'Спрос, пасс.',color:'#8a8a8a'}},y:{min:0,max:100,ticks:{display:true,stepSize:20,color:'#8a8a8a',callback:value=>`${value}%`},grid:{color:'#252525'},title:{display:true,text:'Относительная плотность (пик = 100%)',color:'#8a8a8a'}}}},
    plugins:[{
     id:'distribution-markers',
@@ -35,7 +40,7 @@ export function DemandDistribution({data}:{data:Prediction}) {
      const d=latest.current,{ctx,chartArea:a}=c;
      const badge=(text:string,x:number,y:number,color:string)=>{ctx.font='14px Medeo, sans-serif';const w=ctx.measureText(text).width+24;const left=Math.max(a.left,Math.min(a.right-w,x-w/2));ctx.fillStyle=color;ctx.beginPath();ctx.roundRect(left,y,w,32,8);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(text,left+12,y+21);};
      ctx.save();
-     const mx=c.scales.x.getPixelForValue(d.desired),py=c.scales.y.getPixelForValue(100);
+     const mx=c.scales.x.getPixelForValue(d.desired),py=c.scales.y.getPixelForValue(mode==='bell'?100:d.q*100);
      ctx.strokeStyle=BLUE;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(mx,py);ctx.lineTo(mx,a.bottom);ctx.stroke();
      badge(`Выбранный спрос: ${Math.round(d.desired)} пасс.`,mx,Math.min(a.bottom-36,py+(a.bottom-py)*.45),BLUE);
      const sx=c.scales.x.getPixelForValue(d.seats);ctx.strokeStyle=RED;ctx.setLineDash([7,6]);ctx.beginPath();ctx.moveTo(sx,a.top);ctx.lineTo(sx,a.bottom);ctx.stroke();ctx.setLineDash([]);
@@ -43,6 +48,8 @@ export function DemandDistribution({data}:{data:Prediction}) {
     }
    }]
   });instance.current=chart;
+  chart.options.scales!.y!.title!.text=mode==='bell'?'Относительная плотность (пик = 100%)':'Квантиль спроса, %';
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)chart.options.animation=false;
   return()=>{chart.destroy();instance.current=null;};
  },[]);
  useEffect(()=>{
@@ -58,5 +65,5 @@ export function DemandDistribution({data}:{data:Prediction}) {
   options.max=Math.ceil(Math.max(right*1.08,data.seats*1.12)/10)*10;
   c.update();
  },[data]);
- return <section title="Гауссовская аппроксимация для выбранного сценария спроса." className="live-chart" aria-label="Распределение спроса"><canvas ref={canvas} role="img" aria-label={`Медиана ${Math.round(data.desired)} пассажиров, вместимость ${data.seats} мест`}/></section>;
+ return <section className="live-chart" aria-label="Распределение спроса"><canvas ref={canvas} role="img" aria-label={`Выбранный спрос ${Math.round(data.desired)} пассажиров, вместимость ${data.seats} мест`}/></section>;
 }

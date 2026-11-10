@@ -1,7 +1,11 @@
 ﻿export class RequestError extends Error { constructor(public status:number,message:string){super(message);} }
 export function requireOrigin(request:Request){
  const origin=request.headers.get('origin');
- if(!origin||origin!==new URL(request.url).origin||request.headers.get('sec-fetch-site')==='cross-site')throw new RequestError(403,'Недопустимый источник запроса');
+ const url=new URL(request.url);
+ // Next.js may use localhost internally even when the browser uses 127.0.0.1.
+ const host=request.headers.get('host');
+ const expected=host?`${url.protocol}//${host}`:url.origin;
+ if(!origin||origin!==expected||request.headers.get('sec-fetch-site')==='cross-site')throw new RequestError(403,'Недопустимый источник запроса');
 }
 export async function readJson(request:Request):Promise<Record<string,unknown>>{
  if(request.headers.get('content-type')?.split(';')[0].trim().toLowerCase()!=='application/json')throw new RequestError(415,'Ожидается JSON');
