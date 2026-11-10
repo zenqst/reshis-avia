@@ -1,6 +1,14 @@
 ﻿import type { NextConfig } from 'next';
+import {execFileSync} from 'node:child_process';
+import {version} from './package.json';
+function commitSha(){
+ const supplied=process.env.VERCEL_GIT_COMMIT_SHA||process.env.GITHUB_SHA||process.env.BUILD_COMMIT_SHA;
+ if(supplied)return supplied;
+ try{return execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8',timeout:3000,stdio:['ignore','pipe','ignore']}).trim();}catch{return 'unknown';}
+}
 const config: NextConfig = {
   poweredByHeader: false,
+  env:{NEXT_PUBLIC_APP_VERSION:version,NEXT_PUBLIC_BUILD_COMMIT:commitSha(),NEXT_PUBLIC_BUILD_TIME:new Date().toISOString()},
   async headers() {
     return [{source:'/:path*',headers:[
       {key:'X-Content-Type-Options',value:'nosniff'},
