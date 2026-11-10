@@ -6,7 +6,7 @@ const BLUE='#474fea', RED='#EF4444';
 export function DemandDistribution({data}:{data:Prediction}) {
  const [mode,setMode]=useState<'bell'|'quantiles'>('bell');
  const chartData=mode==='bell'?data:{...data,points:data.quantiles.map((x,i)=>({x,y:(i+1)*10}))};
- return <div className="distribution-panel"><div className="distribution-toolbar"><div className="chart-tabs" aria-label="Вид распределения"><button aria-pressed={mode==='bell'} onClick={()=>setMode('bell')}>Колокол</button><button aria-pressed={mode==='quantiles'} onClick={()=>setMode('quantiles')}>Квантили прогноза</button></div></div><DemandChart key={mode} data={chartData} mode={mode}/><p className="chart-explanation">{mode==='bell'?'Гауссовская аппроксимация вокруг выбранного спроса. Высота — относительная плотность, не вероятность. Красный хвост — спрос выше вместимости.':'Исходные квантили при введённой цене: между соседними уровнями — 10% вероятности. Линии — интерполяция; хвосты ниже q10 и выше q90 не показаны.'}</p><div style={{position:"absolute",width:1,height:1,padding:0,margin:-1,overflow:"hidden",clipPath:"inset(50%)",whiteSpace:"nowrap"}}><table><caption>Квантили спроса при введённой цене</caption><thead><tr><th>Квантиль</th><th>Спрос, пассажиров</th></tr></thead><tbody>{data.quantiles.map((x,i)=><tr key={i}><th>{(i+1)/10}</th><td>{Math.round(x)}</td></tr>)}</tbody></table></div></div>;
+ return <div className="distribution-panel"><div className="distribution-toolbar"><div className="chart-tabs" aria-label="Вид распределения"><button aria-pressed={mode==='bell'} onClick={()=>setMode('bell')}>Колокол</button><button aria-pressed={mode==='quantiles'} onClick={()=>setMode('quantiles')}>Квантили прогноза</button></div></div><DemandChart key={mode} data={chartData} mode={mode}/><p className="chart-explanation">{mode==='bell'?'Гауссовская аппроксимация вокруг выбранного спроса. Высота — относительная плотность, не вероятность. Красный хвост — спрос выше вместимости.':'Исходные квантили при введённой цене: между соседними уровнями — 10% вероятности. Линии — интерполяция; хвосты ниже q = 0,1 и выше q = 0,9 не показаны.'}</p><div style={{position:"absolute",width:1,height:1,padding:0,margin:-1,overflow:"hidden",clipPath:"inset(50%)",whiteSpace:"nowrap"}}><table><caption>Квантили спроса при введённой цене</caption><thead><tr><th>Квантиль</th><th>Спрос, пассажиров</th></tr></thead><tbody>{data.quantiles.map((x,i)=><tr key={i}><th>q = {((i+1)/10).toFixed(1).replace(".",",")}</th><td>{Math.round(x)}</td></tr>)}</tbody></table></div></div>;
 }
 function DemandChart({data,mode}:{data:Prediction;mode:'bell'|'quantiles'}) {
  const canvas=useRef<HTMLCanvasElement>(null);
@@ -50,7 +50,8 @@ function DemandChart({data,mode}:{data:Prediction;mode:'bell'|'quantiles'}) {
     }
    }]
   });instance.current=chart;
-  chart.options.scales!.y!.title!.text=mode==='bell'?'Относительная плотность (пик = 100%)':'Квантиль спроса, %';
+  chart.options.scales!.y!.ticks!.callback=value=>mode==='bell'?String(value)+'%':(Number(value)/100).toFixed(1).replace('.',',');
+  chart.options.scales!.y!.title!.text=mode==='bell'?'Относительная плотность (пик = 100%)':'Квантиль спроса, q';
   if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)chart.options.animation=false;
   return()=>{chart.destroy();instance.current=null;};
  },[]);
